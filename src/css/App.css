@@ -1,0 +1,48 @@
+.table-remove-icon:hover,
+.table-edit-icon:hover {
+  cursor: pointer;
+}
+td {
+  height: 39px;
+}
+
+.chips-table {
+  table-layout: fixed;
+}
+
+.chips-table-row {
+  /* font-size: 14px; */
+}
+
+.table-input {
+  width: 100%;
+  /* font-size: 14px; */
+}
+
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arrow-up {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+
+  border-bottom: 5px solid black;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.arrow-down {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+
+  border-top: 5px solid black;
+  margin-top: 3px;
+  cursor: pointer;
+}
