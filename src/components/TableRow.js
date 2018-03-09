@@ -1,6 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import shortid from "shortid";
+// import shortid from "shortid";
+import { TextInput } from "./TextInput.js";
+import { SelectInput } from "./SelectInput.js";
 // import { showInputField, saveIconClick } from "../actions/actions";
 
 export class TableRow extends React.Component {
@@ -20,7 +22,7 @@ export class TableRow extends React.Component {
         id={item.id + column.name}
         width={column.width}
         className={tableStyles.itemtd}
-        key={shortid.generate()}
+        key={"output-column" + item.id + column.name}
         onDoubleClick={action}>
         <div id={item.id + column.name} className="truncate">
           {item[column.name.toLowerCase()]}
@@ -37,57 +39,79 @@ export class TableRow extends React.Component {
       onFieldChange(item, column, e.target.value, items);
     };
 
+    let input = null;
+
+    if (column.type === "text") {
+      input = (
+        <TextInput
+          item={item}
+          column={column}
+          onChange={onChange}
+          items={items}
+          className={tableStyles.input}
+        />
+      );
+    } else if (column.type === "select") {
+      input = (
+        <SelectInput
+          item={item}
+          column={column}
+          onChange={onFieldChange}
+          className={tableStyles.input}
+        />
+      );
+    } else if (column.type === "date") {
+    }
+
     return (
       <td
         id={item.id + column.name}
         width={column.width}
         className={tableStyles.itemtd}
-        key={shortid.generate()}>
-        <input
-          id={item.id + column.name}
-          className={tableStyles.input}
-          type="text"
-          defaultValue={item[column.name.toLowerCase()]}
-          onChange={onChange}
-        />
+        key={"inline-column-td" + item.id + column.name}>
+        {input}
       </td>
     );
   }
 
   // render single input field on the field that has been double clicked
   inlineModalColumn(item, column) {
-    const {
-      saveIconClick,
-      saveItemAction,
-      onFieldChange,
-      tableStyles,
-      items
-    } = this.props;
-
-    console.log("props", this.props);
-    const onBlur = e => {
-      saveItemAction(item);
-      saveIconClick(item);
-    };
+    const { onFieldChange, tableStyles, items } = this.props;
 
     const onChange = e => {
       onFieldChange(item, column, e.target.value, items);
     };
 
+    let input = null;
+
+    if (column.type === "text") {
+      input = (
+        <TextInput
+          item={item}
+          column={column}
+          onChange={onChange}
+          className={tableStyles.input}
+        />
+      );
+    } else if (column.type === "select") {
+      input = (
+        <SelectInput
+          item={item}
+          column={column}
+          onChange={onFieldChange}
+          items={items}
+          className={tableStyles.input}
+        />
+      );
+    } else if (column.type === "date") {
+    }
     return (
       <td
         id={item.id + column.name}
         width={column.width}
         className={tableStyles.itemtd}
-        key={shortid.generate()}>
-        <input
-          id={item.id + column.name}
-          className={tableStyles.input}
-          type="text"
-          defaultValue={item[column.name.toLowerCase()]}
-          onChange={onChange}
-          onBlur={onBlur}
-        />
+        key={"inline-modal-column-td" + item.id + column.name}>
+        {input}
       </td>
     );
   }
@@ -121,31 +145,29 @@ export class TableRow extends React.Component {
   // render the columns with actions
   actionsColumn(item) {
     const {
-      saveIconClick,
-      editIconClick,
-      saveItemAction,
-      deleteItemAction,
+      saveClick,
+      editClick,
+      deleteClick,
       tableStyles,
       editMode,
       itemIdsBeingEditedSet
     } = this.props;
 
     const editItemClick = e => {
-      editIconClick(item);
+      editClick(item);
       // this.editIconClick(item);
     };
 
     const deleteItemClick = e => {
-      deleteItemAction(item);
+      deleteClick(item);
     };
 
     const saveItemClick = e => {
-      saveItemAction(item);
-      saveIconClick(item);
+      saveClick(item);
     };
 
     let actions = [
-      <div key={shortid.generate()} className="col-sm-4 table-remove-icon">
+      <div key={item.id} className="col-sm-4 table-remove-icon">
         <img
           alt="delete"
           src={tableStyles.removeIcon}
@@ -159,7 +181,7 @@ export class TableRow extends React.Component {
     if (itemIdsBeingEditedSet.has(item.id) && editMode === "inline") {
       actions.unshift(
         <div
-          key={shortid.generate()}
+          key={"save-icon" + item.id}
           className="col-sm-4 offset-sm-1 table-edit-icon">
           <img
             alt="save"
@@ -173,7 +195,7 @@ export class TableRow extends React.Component {
     } else {
       actions.unshift(
         <div
-          key={shortid.generate()}
+          key={"edit-icon" + item.id}
           className="col-sm-4 offset-sm-1 table-edit-icon">
           <img
             alt="edit"
@@ -187,7 +209,7 @@ export class TableRow extends React.Component {
     }
 
     return (
-      <td key={shortid.generate()} width="10%">
+      <td key={"actions-column" + item.id} width="10%">
         <div className="row">{actions}</div>
       </td>
     );
@@ -203,7 +225,7 @@ export class TableRow extends React.Component {
     // tableColumns.unshift(this.actionsColumn(item));
 
     return (
-      <tr key={shortid.generate()}>
+      <tr key={"table-row" + item.id}>
         {this.actionsColumn(item)}
         {tableColumns}
       </tr>

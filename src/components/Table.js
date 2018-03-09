@@ -1,54 +1,163 @@
 import React from "react";
-import { Provider } from "react-redux";
-import { applyMiddleware, createStore } from "redux";
-import { createLogger } from "redux-logger";
-import thunk from "redux-thunk";
-// import thunkMiddleware from "redux-thunk";
-import { reducer } from "../reducers/reducer";
-
-// import shortid from "shortid";
 import PropTypes from "prop-types";
-// import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
 import { ColumnHeaders } from "./ColumnHeaders";
-import { TableRowContainer } from "./TableRowContainer";
-import { ChipsModalContainer } from "./ModalContainer";
-
-import { saveIconClick, hideInputField } from "../actions/actions";
+import { TableRow } from "./TableRow";
+import { ChipsModal } from "./Modal";
 
 class Table extends React.Component {
   constructor(props) {
     super(props);
-    this.store = createStore(reducer, applyMiddleware(thunk, createLogger()));
-    this.state = this.store.getState();
+
+    this.state = {
+      itemBeingEdited: null,
+      itemFieldBeingEdited: null,
+      itemBeingEditedTarget: null,
+      itemIdsBeingEditedSet: new Set(),
+      showModal: false,
+      items: this.props.items
+    };
+
+    this.saveClick = this.saveClick.bind(this);
+    this.editClick = this.editClick.bind(this);
+    this.deleteClick = this.deleteClick.bind(this);
+    this.toggleTodal = this.toggleTodal.bind(this);
+    this.hideInputField = this.hideInputField.bind(this);
+    this.showInputField = this.showInputField.bind(this);
+    this.onFieldChange = this.onFieldChange.bind(this);
   }
 
   componentDidMount() {
-    this.unsubscribe = this.store.subscribe(() => this.forceUpdate());
+    this.setState(this.state);
   }
 
-  renderTable() {
-    const state = this.store.getState();
+  saveClick(item) {
+    this.props.saveItemAction(item);
 
+    let newState = Object.assign({}, this.state);
+
+    newState.itemIdsBeingEditedSet.delete(item.id);
+    newState.itemBeingEdited = null;
+    newState.showModal = false;
+
+    this.setState(newState);
+  }
+
+  editClick(item) {
+    const newState = Object.assign({}, this.state);
+
+    if (newState.itemIdsBeingEditedSet.has(item.id)) {
+      newState.itemIdsBeingEditedSet.delete(item.id);
+    } else {
+      newState.itemIdsBeingEditedSet.add(item.id);
+    }
+
+    newState.itemBeingEdited = item;
+    newState.showModal = true;
+
+    this.setState(newState);
+  }
+
+  deleteClick(item) {
+    this.props.deleteItemAction(item);
+  }
+
+  toggleTodal(item) {
+    this.setState({
+      ...this.state,
+      showModal: !this.state.showModal
+    });
+  }
+
+  hideInputField(e) {
+    const { itemBeingEdited, itemFieldBeingEdited } = this.state;
+    if (
+      e.target.id.toLowerCase() !==
+      itemBeingEdited.id + itemFieldBeingEdited
+    ) {
+      this.setState({
+        ...this.state,
+        itemBeingEdited: null,
+        itemFieldBeingEdited: null
+      });
+    }
+  }
+
+  showInputField(item, field) {
+    this.setState({
+      ...this.state,
+      itemBeingEdited: item,
+      itemFieldBeingEdited: field
+    });
+  }
+
+  onFieldChange(item, column, value) {
+    const newState = Object.assign({}, this.state);
+
+    for (let i of newState.items) {
+      if (item.id === i.id) {
+        i[column.name.toLowerCase()] = value;
+      }
+    }
+
+    this.setState(newState);
+  }
+
+  renderModal() {
+    const { itemBeingEdited, showModal } = this.state;
+
+    const item = this.props.items
+      .filter(i => {
+        return itemBeingEdited && i.id === itemBeingEdited.id;
+      })
+      .pop();
+
+    if (
+      (this.props.editMode === "modal" ||
+        this.props.editMode === "inline-modal") &&
+      showModal
+    ) {
+      return (
+        <ChipsModal
+          showModal={showModal}
+          item={item}
+          columns={this.props.columns}
+          saveClick={this.saveClick}
+          toggleTodal={this.toggleTodal}
+          onFieldChange={this.onFieldChange}
+        />
+      );
+    }
+    return null;
+  }
+
+  render() {
     const {
-      columns,
       items,
-      tableStyles,
-      saveItemAction,
-      deleteItemAction,
-      editMode
-    } = this.props;
+      itemBeingEdited,
+      itemFieldBeingEdited,
+      itemIdsBeingEditedSet
+    } = this.state;
+
+    const { columns, tableStyles, editMode } = this.props;
 
     const tableRows = items.map(i => {
       return (
-        <TableRowContainer
+        <TableRow
           key={i.id}
           item={i}
           columns={columns}
           tableStyles={tableStyles}
-          saveItemAction={saveItemAction}
-          deleteItemAction={deleteItemAction}
           editMode={editMode}
           items={items}
+          itemBeingEdited={itemBeingEdited}
+          itemFieldBeingEdited={itemFieldBeingEdited}
+          itemIdsBeingEditedSet={itemIdsBeingEditedSet}
+          saveClick={this.saveClick}
+          deleteClick={this.deleteClick}
+          editClick={this.editClick}
+          onFieldChange={this.onFieldChange}
+          showInputField={this.showInputField}
+          toggleTodal={this.toggleTodal}
         />
       );
     });
@@ -57,16 +166,18 @@ class Table extends React.Component {
 
     const hideFieldInput = e => {
       if (
-        state.itemBeingEdited &&
+        !e.target.className.includes("Select") &&
+        itemBeingEdited &&
         e.target.id.toLowerCase() !==
-          state.itemBeingEdited.id + state.itemFieldBeingEdited &&
+          itemBeingEdited.id + itemFieldBeingEdited &&
         editMode === "inline-modal"
       ) {
-        this.store.dispatch(hideInputField(e));
+        this.hideInputField(e);
+        this.saveClick(itemBeingEdited);
       }
     };
 
-    if (state.itemBeingEdited) {
+    if (itemBeingEdited) {
       action = hideFieldInput;
     }
 
@@ -82,46 +193,9 @@ class Table extends React.Component {
           </thead>
           <tbody>{tableRows}</tbody>
         </table>
-        {JSON.stringify(state)}
+        {JSON.stringify(this.state)}
       </div>
     );
-  }
-
-  renderModal() {
-    const state = this.store.getState();
-
-    const item = this.props.items
-      .filter(i => {
-        return state.itemBeingEdited && i.id === state.itemBeingEdited.id;
-      })
-      .pop();
-
-    if (
-      (this.props.editMode === "modal" ||
-        this.props.editMode === "inline-modal") &&
-      state.showModal
-    ) {
-      const saveItemClick = e => {
-        this.props.saveItemAction(item);
-        this.store.dispatch(saveIconClick(item));
-      };
-
-      return (
-        <ChipsModalContainer
-          showModal={state.showModal}
-          item={item}
-          columns={this.props.columns}
-          saveItemClick={saveItemClick}
-          onFieldChange={this.onFieldChange}
-          items={this.props.items}
-        />
-      );
-    }
-    return null;
-  }
-
-  render() {
-    return <Provider store={this.store}>{this.renderTable()}</Provider>;
   }
   // editIconClick(item) {
   //   this.store.dispatch(editIconClick(item));

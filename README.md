@@ -21,6 +21,7 @@
         * on blur it calls the calls the callback for save with the edited item
         * note: in this mode may need to bind the hideFieldInput method to the body so that the input correctly goes away after the double click
 * Todo
+  * Date and Select input types
   * Sort
   * More config
     * Show / Hide actions (read only table), edit mode "none"

@@ -5,15 +5,15 @@ import Table from "./components/Table";
 require("./css/App.css");
 
 const columns = [
-  { name: "Name", width: "10%", type: "text" },
+  { name: "Name", width: "5%", type: "text" },
   { name: "Description", width: "35%", type: "text" },
   {
     name: "Category",
     width: "10%",
     type: "select",
-    values: ["Sleep Stuff", "Food Stuff"]
+    options: ["Sleep Stuff", "Food Stuff", "Electronics"]
   },
-  { name: "Weight", width: "10%", type: "text" }
+  { name: "Weight", width: "5%", type: "date" }
 ];
 
 // all items need a unique id
